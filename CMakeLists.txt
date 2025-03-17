@@ -37,7 +37,7 @@ pico_sdk_init()
 
 add_executable(AHRS 
                 AHRS.c AHRS.h 
-                SPI_LSM6DSOX.c SPI_LSM6DSOX.h
+                LSM6DSOX.c LSM6DSOX.h
                 helper.c helper.h
                 )
 

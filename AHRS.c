@@ -8,24 +8,23 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 
-#include "SPI_LSM6DSOX.h"
+#include "LSM6DSOX.h"
 #include "AHRS.h"
 #include "helper.h"
 
 static char event_str[128];
+LSM6DSOX acc;
 
 void setup() {
     stdio_init_all();
-
     // GPIO
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
     gpio_init(PIN_LSM6DSOX_INT1);
 
-    
     // SPI 
-    spi_init(SPI_PORT, 1000*1000); // 1 MHz sampling rate
+    spi_init(SPI_PORT, 10000000); // 1 MHz sampling rate
     spi_set_format(SPI_PORT, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST); // LSM6dSOX uses cpol = 1, cpha = 1
     gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
     gpio_set_function(PIN_CS,   GPIO_FUNC_SIO);
@@ -56,18 +55,13 @@ void setup() {
     gpio_set_irq_enabled_with_callback(PIN_LSM6DSOX_INT1, GPIO_IRQ_EDGE_RISE, 
         true, &gpio_irq_callback);
 
-        
-    setup_LSM6DSOX();
 }
 
-int main()
-{
+int main() {
     setup();
     gpio_put(PICO_DEFAULT_LED_PIN, true);
-    uart_puts(UART_ID, " Hello, UART!\n");
-    char* buf;
 
-    printf("Hello, world!\n");
+    LSM6DSOX_Initialize(&acc, SPI_PORT, PIN_CS);
     while (true) {
         sleep_ms(100);
         printf("Waiting...\n");
@@ -80,6 +74,7 @@ void gpio_irq_callback(uint gpio, uint32_t events) {
     gpio_event_string(event_str, events);
     printf("GPIO %d %s:\t ", gpio, event_str);
     uint16_t data[3];
-    read_Accel_Data(data);
-    printf("X: %04x\t Y: %04x\t Z: %04x\n", data[0], data[1], data[2]);
+    LSM6DSOX_ReadAccelerations(&acc);
+    printf("X: %f m/s^2\t Y: %f m/s^2\t Z: %f m/s^2\n", 
+            acc.accel_msp2[0], acc.accel_msp2[1], acc.accel_msp2[2]);
 }
