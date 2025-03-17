@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "pico/stdlib.h"
 #include "helper.h"
 
 void printbuf(uint8_t buf[], size_t len) {
@@ -19,8 +20,7 @@ void printbuf(uint8_t buf[], size_t len) {
     }
 }
 
-
-static void printSerialPacket(unsigned char packet_upper, unsigned char packet_lower) {
+void printSerialPacket(unsigned char packet_upper, unsigned char packet_lower) {
     char hexChars[] = "0123456789ABCDEF"; // List of hex characters to map with
     unsigned char packetAsString[5];
 
@@ -32,4 +32,26 @@ static void printSerialPacket(unsigned char packet_upper, unsigned char packet_l
 
     packetAsString[4] = '\0'; // add string terminator
     printf("Serial Packet: %s\n", packetAsString);
+}
+
+// Copied from Datasheet - used for debugging gpio interrupt events
+void gpio_event_string(char *buf, uint32_t events) {
+    for (uint i = 0; i < 4; i++) {
+        uint mask = (1 << i);
+        if (events & mask) {
+            // Copy this event string into the user string
+            const char *event_str = gpio_irq_str[i];
+            while (*event_str != '\0') {
+                *buf++ = *event_str++;
+            }   
+            events &= ~mask;
+        
+            // If more events add ", "
+            if (events) {
+                *buf++ = ',';
+                *buf++ = ' ';
+            }
+        }
+    }   
+    *buf++ = '\0';
 }

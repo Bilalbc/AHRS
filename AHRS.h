@@ -7,6 +7,7 @@
 #define UART_TX_PIN 0
 #define UART_RX_PIN 1
 
-void uart0_irq_routine(void);
+void gpio_irq_callback(uint gpio, uint32_t events);
+void gpio_event_string(char *buf, uint32_t events);
 
 #endif
