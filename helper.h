@@ -1,7 +1,6 @@
 #ifndef HELPER_H
 #define HELPER_H
 
-
 static const char *gpio_irq_str[] = {
     "LEVEL_LOW", // 0x1
     "LEVEL_HIGH", // 0x2

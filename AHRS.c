@@ -17,13 +17,13 @@ LSM6DSOX acc;
 
 void setup() {
     stdio_init_all();
-    // GPIO
+    /* GPIO */
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
     gpio_init(PIN_LSM6DSOX_INT1);
 
-    // SPI 
+    /* SPI  */
     spi_init(SPI_PORT, 10000000); // 1 MHz sampling rate
     spi_set_format(SPI_PORT, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST); // LSM6dSOX uses cpol = 1, cpha = 1
     gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
@@ -34,12 +34,12 @@ void setup() {
     gpio_set_dir(PIN_CS, GPIO_OUT);
     gpio_put(PIN_CS, 1); // CS active high
 
-    // Check Clocks
+    /* Check Clocks */
     printf("System Clock Frequency is %d Hz\n", clock_get_hz(clk_sys));
     printf("USB Clock Frequency is %d Hz\n", clock_get_hz(clk_usb));
     printf("peri Clock Frequency is %d Hz\n", clock_get_hz(clk_peri));
 
-    // UART
+    /* UART */
     uart_init(UART_ID, BAUD_RATE);
     gpio_set_function(UART_TX_PIN, UART_FUNCSEL_NUM(UART_ID, UART_TX_PIN));
     gpio_set_function(UART_RX_PIN, UART_FUNCSEL_NUM(UART_ID, UART_RX_PIN));
@@ -54,7 +54,6 @@ void setup() {
     // uart_set_irqs_enabled(UART_ID, true, false); // enable interrupts on RX
     gpio_set_irq_enabled_with_callback(PIN_LSM6DSOX_INT1, GPIO_IRQ_EDGE_RISE, 
         true, &gpio_irq_callback);
-
 }
 
 int main() {
@@ -73,8 +72,16 @@ void gpio_irq_callback(uint gpio, uint32_t events) {
     // so we can print it
     gpio_event_string(event_str, events);
     printf("GPIO %d %s:\t ", gpio, event_str);
-    uint16_t data[3];
-    LSM6DSOX_ReadAccelerations(&acc);
-    printf("X: %f m/s^2\t Y: %f m/s^2\t Z: %f m/s^2\n", 
-            acc.accel_msp2[0], acc.accel_msp2[1], acc.accel_msp2[2]);
+    switch (gpio) {
+        case 22:
+            uint16_t data[3];
+            LSM6DSOX_ReadAccelerations(&acc);
+            printf("X: %f m/s^2\t Y: %f m/s^2\t Z: %f m/s^2\n", 
+                    acc.accel_msp2[0], acc.accel_msp2[1], acc.accel_msp2[2]);
+            break;
+            
+        default: 
+            break;
+    }
+   
 }

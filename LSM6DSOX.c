@@ -21,12 +21,24 @@ void LSM6DSOX_Initialize(LSM6DSOX *dev, spi_inst_t *spi, uint CS_PIN) {
     else while(1); // replace with error code return
 
     printf("Setting Up LSM6DSOX XL\n");
-    reg_data = 0x41;
+    reg_data = 0x21;
     LSM6DSOX_WriteRegister(dev, CTRL1_XL, &reg_data);
 
-    printf("Setting Up INT1 Data Ready Interrupt: ");
+    printf("Setting Up INT1 Data Ready Interrupt \n");
     reg_data = 0x01;
     LSM6DSOX_WriteRegister(dev, INT1_CTRL, &reg_data);
+
+    printf("Configuring Offsets: X: %d,\t Y: %d\t Z: %d\n", X_OFS_VAL, Y_OFS_VAL, Z_OFS_VAL);
+    /* enable accel offset correction block */
+    reg_data = 0x2;
+    LSM6DSOX_WriteRegister(dev, CTRL7_G, &reg_data); 
+
+    reg_data = (uint8_t) X_OFS_VAL;
+    LSM6DSOX_WriteRegister(dev, X_OFS_USR, &reg_data);
+    reg_data = (uint8_t) Y_OFS_VAL;
+    LSM6DSOX_WriteRegister(dev, Y_OFS_USR, &reg_data);
+    reg_data = (uint8_t) Z_OFS_VAL;
+    LSM6DSOX_WriteRegister(dev, Z_OFS_USR, &reg_data);
 
     /* struct parameters */
     dev->accel_msp2[0] = 0.0f;
@@ -37,7 +49,7 @@ void LSM6DSOX_Initialize(LSM6DSOX *dev, spi_inst_t *spi, uint CS_PIN) {
 }
 
 void LSM6DSOX_ReadAccelerations(LSM6DSOX *dev) {
-    uint16_t accelRaw[3], accelRawSigned[3];
+    uint16_t accelRaw[3];
     uint8_t regData[2]; 
 
     /* X Data */
@@ -55,6 +67,7 @@ void LSM6DSOX_ReadAccelerations(LSM6DSOX *dev) {
     LSM6DSOX_ReadRegister(dev, OUTZ_L_A, &regData[1]);
     accelRaw[2] = (regData[0] << 8 ) | regData[1];
 
+    int16_t accelRawSigned[3];
     /* Take the two's complement */
     accelRawSigned[0] = (int16_t) accelRaw[0];
     accelRawSigned[1] = (int16_t) accelRaw[1];
@@ -65,27 +78,6 @@ void LSM6DSOX_ReadAccelerations(LSM6DSOX *dev) {
     dev->accel_msp2[0] = GRAVITY_F * sensitivity * accelRawSigned[0];
     dev->accel_msp2[1] = GRAVITY_F * sensitivity * accelRawSigned[1];
     dev->accel_msp2[2] = GRAVITY_F * sensitivity * accelRawSigned[2];
-}
-
-static void spiCreateAndSendRequest(LSM6DSOX *dev, uint8_t reg, uint8_t *data, bool read) {
-    if(read) LSM6DSOX_ReadRegister(dev, reg, data);
-    else LSM6DSOX_WriteRegister(dev, reg, data);
-}
-
-static void createSPIWriteReq(uint8_t* request, uint8_t reg, uint8_t data) {
-    request[0] = (0x00 | reg); //MSB = 0, register address (8-14)
-    request[1] = data; // add Data to write (0-7)
-    
-    // printf("\nWRITE REQUEST:");
-    // printSerialPacket(request[0], request[1]);
-}
-
-static void createSPIReadReq(uint8_t* request, uint8_t reg) {
-    request[0] = 0x80 | reg; //MSB = 1, register address (8-14)
-    request[1] = 0x00; 
-    
-    // printf("\nREAD REQUEST:");
-    // printSerialPacket(request[0], request[1]);
 }
 
 void LSM6DSOX_ReadRegister(LSM6DSOX *dev, uint8_t reg, uint8_t *data) {
@@ -112,25 +104,23 @@ void LSM6DSOX_WriteRegister(LSM6DSOX *dev, uint8_t reg, uint8_t *data) {
     gpio_put(dev->cs_pin, 1); // pull CS high
 }
 
-// static uint8_t spiSendRequest(uint8_t* request, int request_size) {
-//     uint8_t inbuf[request_size]; // needs to be allocated memory
-//     for(int i = 0; i < request_size; i++) inbuf[i] = 0; // initialize to all 0
+static void spiCreateAndSendRequest(LSM6DSOX *dev, uint8_t reg, uint8_t *data, bool read) {
+    if(read) LSM6DSOX_ReadRegister(dev, reg, data);
+    else LSM6DSOX_WriteRegister(dev, reg, data);
+}
+
+static void createSPIWriteReq(uint8_t* request, uint8_t reg, uint8_t data) {
+    request[0] = (0x00 | reg); //MSB = 0, register address (8-14)
+    request[1] = data; // add Data to write (0-7)
     
-//     gpio_put(PIN_CS, 0); // pull CS low
+    // printf("\nWRITE REQUEST:");
+    // printSerialPacket(request[0], request[1]);
+}
 
-//     // If the request is a read request
-//     if(request[0] & MASK(7)) {
-//         // printf("PREPARING READ REQUEST\n");
-//         // 2*sizeof since we are sending two bytes (request[0], and request[1])
-//         spi_write_read_blocking(SPI_PORT, request, inbuf, request_size*sizeof(uint8_t)); 
-//         // printbuf(inbuf, 2);
-        
-//     } else { // if the request is a write request
-//         // printf("PREPARING WRITE REQUEST\n");
-//         spi_write_blocking(SPI_PORT, request, request_size*sizeof(uint8_t));
-//     }
-
-//     gpio_put(PIN_CS, 1); // pull CS high
-
-//     return inbuf[1];
-// }
+static void createSPIReadReq(uint8_t* request, uint8_t reg) {
+    request[0] = 0x80 | reg; //MSB = 1, register address (8-14)
+    request[1] = 0x00; 
+    
+    // printf("\nREAD REQUEST:");
+    // printSerialPacket(request[0], request[1]);
+}
