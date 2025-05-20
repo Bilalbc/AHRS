@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "pico/stdlib.h"
+#include "hardware/spi.h"
+
+#include "LSM6DSOX.h"
 #include "helper.h"
 
 void printbuf(uint8_t buf[], size_t len) {
@@ -54,4 +58,21 @@ void gpio_event_string(char *buf, uint32_t events) {
         }
     }   
     *buf++ = '\0';
+}
+
+void tilt_SingleAxis_Accel(LSM6DSOX *dev) {
+    float roll = 0.0f; 
+    float pitch = 0.0f;
+
+    /* for code clarity */
+    float x = dev->accel_mps2[X_AXIS_DATA];
+    float y = dev->accel_mps2[Y_AXIS_DATA];
+    float z = dev->accel_mps2[Z_AXIS_DATA];
+
+    roll = atan2f( y, (sqrtf( x*x +  z*z ) ) ); // Roll 
+    pitch = atan2f( x, (sqrtf( y*y + z*z ) ) ); // Pitch 
+
+    dev->tilt_Accel[X_AXIS_DATA] = roll * RAD_TO_DEG ;
+    dev->tilt_Accel[Y_AXIS_DATA]  = pitch * RAD_TO_DEG;
+
 }

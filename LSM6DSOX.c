@@ -5,7 +5,6 @@
 
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
-#include "helper.h"
 #include "LSM6DSOX.h"
 
 void LSM6DSOX_Initialize(LSM6DSOX *dev, spi_inst_t *spi, uint CS_PIN) {
@@ -41,9 +40,9 @@ void LSM6DSOX_Initialize(LSM6DSOX *dev, spi_inst_t *spi, uint CS_PIN) {
     LSM6DSOX_WriteRegister(dev, Z_OFS_USR, &reg_data);
 
     /* struct parameters */
-    dev->accel_msp2[0] = 0.0f;
-    dev->accel_msp2[1] = 0.0f;
-    dev->accel_msp2[2] = 0.0f;
+    dev->accel_mps2[X_AXIS_DATA] = 0.0f;
+    dev->accel_mps2[Y_AXIS_DATA] = 0.0f;
+    dev->accel_mps2[Z_AXIS_DATA] = 0.0f;
     /* TODO Return error codes as uint8_t */
 
 }
@@ -55,29 +54,29 @@ void LSM6DSOX_ReadAccelerations(LSM6DSOX *dev) {
     /* X Data */
     LSM6DSOX_ReadRegister(dev, OUTX_H_A, &regData[0]);
     LSM6DSOX_ReadRegister(dev, OUTX_L_A, &regData[1]);
-    accelRaw[0] = (regData[0] << 8 ) | regData[1];
+    accelRaw[X_AXIS_DATA] = (regData[0] << 8 ) | regData[1];
 
     /* Y Data */
     LSM6DSOX_ReadRegister(dev, OUTY_H_A, &regData[0]);
     LSM6DSOX_ReadRegister(dev, OUTY_L_A, &regData[1]);
-    accelRaw[1] = (regData[0] << 8 ) | regData[1];
+    accelRaw[Y_AXIS_DATA] = (regData[0] << 8 ) | regData[1];
 
     /* Z Data */
     LSM6DSOX_ReadRegister(dev, OUTZ_H_A, &regData[0]);
     LSM6DSOX_ReadRegister(dev, OUTZ_L_A, &regData[1]);
-    accelRaw[2] = (regData[0] << 8 ) | regData[1];
+    accelRaw[Z_AXIS_DATA] = (regData[0] << 8 ) | regData[1];
 
     int16_t accelRawSigned[3];
     /* Take the two's complement */
-    accelRawSigned[0] = (int16_t) accelRaw[0];
-    accelRawSigned[1] = (int16_t) accelRaw[1];
-    accelRawSigned[2] = (int16_t) accelRaw[2];
+    accelRawSigned[X_AXIS_DATA] = (int16_t) accelRaw[X_AXIS_DATA];
+    accelRawSigned[Y_AXIS_DATA] = (int16_t) accelRaw[Y_AXIS_DATA];
+    accelRawSigned[Z_AXIS_DATA] = (int16_t) accelRaw[Z_AXIS_DATA];
 
     /* Conversion to m/s^2 based on Datasheet sensitivity  */
     float sensitivity = SENSITIVITY_2_G / 1000.0f;
-    dev->accel_msp2[0] = GRAVITY_F * sensitivity * accelRawSigned[0];
-    dev->accel_msp2[1] = GRAVITY_F * sensitivity * accelRawSigned[1];
-    dev->accel_msp2[2] = GRAVITY_F * sensitivity * accelRawSigned[2];
+    dev->accel_mps2[X_AXIS_DATA] = GRAVITY_F * sensitivity * accelRawSigned[X_AXIS_DATA];
+    dev->accel_mps2[Y_AXIS_DATA] = GRAVITY_F * sensitivity * accelRawSigned[Y_AXIS_DATA];
+    dev->accel_mps2[Z_AXIS_DATA] = GRAVITY_F * sensitivity * accelRawSigned[Z_AXIS_DATA];
 }
 
 void LSM6DSOX_ReadRegister(LSM6DSOX *dev, uint8_t reg, uint8_t *data) {

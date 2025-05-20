@@ -76,8 +76,9 @@ void gpio_irq_callback(uint gpio, uint32_t events) {
         case 22:
             uint16_t data[3];
             LSM6DSOX_ReadAccelerations(&acc);
-            printf("X: %f m/s^2\t Y: %f m/s^2\t Z: %f m/s^2\n", 
-                    acc.accel_msp2[0], acc.accel_msp2[1], acc.accel_msp2[2]);
+            tilt_SingleAxis_Accel(&acc);
+            printf("X: %f deg\t Y: %f deg\t Z: %f m/s^2\n", 
+                    acc.tilt_Accel[X_AXIS_DATA], acc.tilt_Accel[Y_AXIS_DATA], acc.accel_mps2[Z_AXIS_DATA]);
             break;
             
         default: 

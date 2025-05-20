@@ -36,8 +36,8 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 
 add_executable(AHRS 
-                AHRS.c AHRS.h 
                 LSM6DSOX.c LSM6DSOX.h
+                AHRS.c AHRS.h 
                 helper.c helper.h
                 )
 

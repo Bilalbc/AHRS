@@ -3,6 +3,9 @@
 
 /* Define Constants */
 #define REQUEST_SIZE 2
+#define X_AXIS_DATA 0
+#define Y_AXIS_DATA 1
+#define Z_AXIS_DATA 2
 /* Sensitivity value taken from LSM6DSOX datasheet */
 #define SENSITIVITY_2_G 0.061f
 #define GRAVITY_F 9.81f
@@ -41,7 +44,6 @@
 #define Y_OFS_USR 0x74
 #define Z_OFS_USR 0x75
 
-
 /* struct used to decouple the implementation of LSM6DSOX from spi port */
 typedef struct {
     /* SPI Instance */
@@ -49,9 +51,17 @@ typedef struct {
     /* CS Pin*/
     uint cs_pin;
     /* Acceleration Data (X, Y, Z) converted to m/s^2 */
-    float accel_msp2[3];
+    float accel_mps2[3];
     /* Gyroscope Data (X, Y, Z) converted to dps */
     float gyro_dps[3];
+
+    /* 
+        Tilt Angle (roll, pitch) calulated based on Accelerometer only 
+        Due to the Nature of accelerometers, this will only provide 
+        Accurate results when sensor is tilted along a single axis
+        
+    */
+    float tilt_Accel[2]; 
 } LSM6DSOX;
 
 void LSM6DSOX_Initialize(LSM6DSOX *dev, spi_inst_t *spi, uint CS_PIN);
@@ -63,6 +73,5 @@ void LSM6DSOX_WriteRegister(LSM6DSOX *dev, uint8_t reg, uint8_t *data);
 static void spiCreateAndSendRequest(LSM6DSOX *dev, uint8_t reg, uint8_t *data, bool read);
 static void createSPIWriteReq(uint8_t* request, uint8_t reg, uint8_t data);
 static void createSPIReadReq(uint8_t* request, uint8_t reg);
-
 
 #endif
